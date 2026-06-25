@@ -1,0 +1,64 @@
+@page "/sentiment"
+@rendermode InteractiveServer
+
+<PageTitle>Analyze Mood</PageTitle>
+
+<h1>How are you doing? @moodEmoji</h1>
+
+<div style="max-width: 500px;">
+    <textarea class="form-control mb-3" rows="4" @bind="userInput" @bind:event="oninput" placeholder="Wpisz tutaj swój nastrój..."></textarea>
+
+    <button class="btn btn-primary w-100 mb-3" @onclick="AnalyzeSentiment">Analizuj mój nastrój</button>
+
+    @if (label != null)
+    {
+        <div class="alert @alertClass" role="alert">
+            <strong>Twój nastrój to: @label</strong>
+            <br />
+            Pewność klasyfikacji: @confidence%
+        </div>
+    }
+</div>
+
+@code {
+    private string userInput = "";
+    private string? label;
+    private string moodEmoji = "🙂";
+    private string alertClass = "alert-info";
+    private int confidence = 0;
+
+    private static readonly string[] positiveWords = { "happy", "good", "great", "love", "awesome", "excellent", "wonderful", "fantastic", "joy", "excited", "pleased", "glad", "cheerful", "radiant", "lucky", "grateful", "beautiful", "amazing", "super", "nice" };
+    private static readonly string[] negativeWords = { "sad", "bad", "hate", "terrible", "awful", "horrible", "depressed", "angry", "miserable", "lonely", "upset", "worried", "anxious", "frustrated", "hurt", "pain", "cry", "tired", "stressed", "annoyed" };
+
+    private void AnalyzeSentiment()
+    {
+        if (string.IsNullOrWhiteSpace(userInput)) return;
+
+        var words = userInput.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        int pos = words.Count(w => positiveWords.Contains(w));
+        int neg = words.Count(w => negativeWords.Contains(w));
+
+        if (pos > neg)
+        {
+            label = "positive";
+            moodEmoji = "😊";
+            alertClass = "alert-success";
+            confidence = Math.Min(95, 60 + pos * 10);
+        }
+        else if (neg > pos)
+        {
+            label = "negative";
+            moodEmoji = "😞";
+            alertClass = "alert-danger";
+            confidence = Math.Min(95, 60 + neg * 10);
+        }
+        else
+        {
+            label = "neutral";
+            moodEmoji = "😐";
+            alertClass = "alert-warning";
+            confidence = 55;
+        }
+    }
+}
